@@ -54,7 +54,7 @@ var GraphVizHandler = (function () {
         return jsChart;
     }
 
-    GraphVizHandler.prototype.createWordCloud = async function (target, title, data) {
+    GraphVizHandler.prototype.createWordCloud = async function (target, title, wordData) {
 
         if (!wordData || !Array.isArray(wordData) || wordData.length === 0) {
             console.error('Invalid data provided to drawTopicWordCloud:', wordData);
@@ -116,9 +116,9 @@ function getNewGraphVizHandler() {
 }
 
 function getColorForWeight(weight) {
-    const r = Math.floor(50 + (weight * 205));
-    const g = Math.floor(50 + ((1 - weight) * 150));
-    const b = Math.floor(150 + ((1 - weight) * 105));
+    const r = Math.floor(255 * (1 - weight)); // Red increases as weight decreases
+    const g = Math.floor(200 * weight);      // Green increases as weight increases
+    const b = 0;                             // Blue remains constant
     return "rgb(" + r + ", " + g + ", " + b + ")";
 }
 

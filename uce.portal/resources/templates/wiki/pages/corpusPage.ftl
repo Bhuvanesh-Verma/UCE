@@ -14,6 +14,16 @@
 
     <hr class="mt-2 mb-3"/>
 
+    <div class="text-center mb-3">
+        <h6 class="mb-3">Top 20 words from Corpus</h6>
+        <!-- Topic Word Cloud -->
+        <div class="col-md-6 mx-auto">
+            <div id="topicWordCloud"></div>
+        </div>
+    </div>
+
+    <div id="topic-distribution-container"style="height: 500px; width:100%"></div>
+
     <div class="mt-4 mb-3 card-shadow">
         <!-- corpusConfig raw -->
         <div class="corpus-config-json">
@@ -84,6 +94,36 @@
     $(document).ready(function () {
         // After that, we load documentsListView
         //loadCorpusDocuments(${vm.getCorpus().getCorpus().getId()}, $('.wiki-page .corpus-documents-list-include'));
+        var wordData = [
+            <#list vm.getWordCloudData() as term>
+            {
+                "term": "${term.term?js_string}",
+                "weight": ${term.weight?c}
+            }<#if term_has_next>,</#if>
+            </#list>
+        ];
+
+        var topicDistData = {
+            "labels": [
+                <#list vm.getTopicDistributionData() as item>
+                "${item.topicLabel?js_string}"<#if item_has_next>,</#if>
+                </#list>
+            ],
+            "data": [
+                <#list vm.getTopicDistributionData() as item>
+                ${item.weight?c}<#if item_has_next>,</#if>
+                </#list>
+            ],
+            "labelName": "Topic Weights"
+        };
+
+        window.graphVizHandler.createWordCloud(document.getElementById('topicWordCloud'), 'Word Cloud', wordData);
+
+        window.graphVizHandler.createBasicChart(document.getElementById('topic-distribution-container'),
+            'Top 20 topics from Corpus',
+            topicDistData,
+            'bar',
+        );
     })
 </script>
 

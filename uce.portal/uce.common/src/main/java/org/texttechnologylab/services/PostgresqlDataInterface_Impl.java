@@ -1446,6 +1446,49 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
 
+    public List<TopicWord> getNormalizedTopicWordsForCorpus(long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = "SELECT word, " +
+                    "AVG(probability) AS avg_probability, " +
+                    "AVG(probability) / SUM(AVG(probability)) OVER () AS normalized_probability " +
+                    "FROM corpustopicwords " +
+                    "WHERE corpus_id = :corpusId " +
+                    "GROUP BY word " +
+                    "ORDER BY normalized_probability DESC";
+
+            var query = session.createNativeQuery(sql);
+            query.setParameter("corpusId", corpusId);
+
+            List<Object[]> results = query.getResultList();
+
+            List<TopicWord> topicWords = new ArrayList<>();
+            for (Object[] row : results) {
+                TopicWord tw = new TopicWord();
+                tw.setWord((String) row[0]);
+                tw.setProbability((Double) row[2]); // Use normalized probability
+                topicWords.add(tw);
+            }
+
+            return topicWords.size() > 20 ? topicWords.subList(0, 20) : topicWords;
+        });
+    }
+
+    public List<Object[]> getTopNormalizedTopicsByCorpusId(long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = """
+            SELECT topic, normalized_score
+            FROM get_normalized_topic_scores(:corpusId)
+            ORDER BY normalized_score DESC
+            LIMIT 20
+        """;
+
+            var query = session.createNativeQuery(sql)
+                    .setParameter("corpusId", corpusId);
+
+            return query.getResultList();
+        });
+    }
+
     /**
      * Parses the annotation occurrences that our search query outputs. This is so scuffed because hibernate freaking sucks, it's so nested.
      *
