@@ -591,7 +591,7 @@ function initScrollbarMinimap() {
 function updateMinimapMarkers() {
     const $minimap = $('.minimap-markers');
     const dimensions = getMinimapDimensions();
-    
+
     $minimap.empty();
 
     $('.document-content .page').each(function(index) {
@@ -672,17 +672,17 @@ function addAllTopicMarkersToMinimap() {
     });
 }
 
-function updateTopicMarkersOnMinimap() {
+function updateTopicMarkersOnMinimap(selectedTopic=null) {
     const $minimap = $('.minimap-markers');
     const dimensions = getMinimapDimensions();
 
     const $activeTopic = $('.topic-tag.active-topic');
-    if ($activeTopic.length === 0) return;
+    if ($activeTopic.length === 0 && selectedTopic === null) return;
 
     $('.minimap-marker.all-topics-marker').hide();
 
-    const activeTopic = $activeTopic.data('topic');
-    const topicColor = $activeTopic.css('background-color');
+    const activeTopic = selectedTopic ? selectedTopic : $activeTopic.data('topic');
+    const topicColor = topicColorMap[activeTopic];
 
     $('.colorable-topic').each(function() {
         const $topic = $(this);
@@ -728,7 +728,7 @@ function minimapToDocumentPosition(minimapPos, dimensions) {
 
 function createMinimapMarker(options) {
     const { top, height, color, elementId, topic, className } = options;
-    
+
     const $marker = $('<div></div>')
         .addClass('minimap-marker')
         .addClass(className || '')
@@ -737,10 +737,10 @@ function createMinimapMarker(options) {
             'height': Math.max(2, height) + 'px',
             'background-color': color || '#ccc'
         });
-    
+
     if (elementId) $marker.attr('data-element-id', elementId);
     if (topic) $marker.attr('data-topic', topic);
-    
+
     return $marker;
 }
 
@@ -773,3 +773,141 @@ function updateMinimapScroll() {
         'height': (visibleHeight * minimapHeight) + 'px'
     });
 }
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const targetId = btn.getAttribute('data-tab');
+        const sideBar = document.querySelector('.side-bar');
+
+        // Toggle button active state
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Toggle content pane visibility
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.toggle('active', pane.id === targetId);
+        });
+
+        // Adjust sidebar width on visualization tab
+        if (targetId !== 'navigator-tab') {
+            $('.scrollbar-minimap').css({
+                right: ($('.document-content').width() > 900 ? ($('.document-content').width() + 100) + 'px' : '510px'),
+
+            });
+            $('.topic-navigation-buttons').css({right:($('.document-content').width() > 900 ? ($('.document-content').width() + 130) + 'px' : '520px')})
+            sideBar.classList.add('visualization-expanded');
+        } else {
+            $('.scrollbar-minimap').css({
+                right: '510px',
+            });
+
+            $('.topic-navigation-buttons').css({right: '520px'});
+            clearTopicColoring();
+
+            hideTopicNavButtons();
+            currentSelectedTopic = null;
+            sideBar.classList.remove('visualization-expanded');
+        }
+
+        // If visualization tab is selected, trigger the chart
+        if (targetId === 'visualization-tab') {
+            const container = document.getElementById('visualization-container');
+            const rawId = container.getAttribute("data-document-id");
+            const documentId = parseInt(rawId.replace(/,/g, ''));
+
+            let sentenceTopicData = [];
+            $('.colorable-topic').each(function () {
+                const topicValue = $(this).data('topic-value');
+                const utId = parseInt(this.id.replace('utopic-UT-', ''));
+
+                // Assuming each colorable-topic represents a connection from a sentence to a topic
+                // You might need to adjust this based on your actual data structure
+                sentenceTopicData.push({
+                    from: utId,  // or some other identifier for the sentence
+                    to: topicValue,
+                    weight: 1  // or some other value representing the strength of the connection
+                });
+            });
+
+            // Avoid double-rendering if already rendered
+            if (container.classList.contains('rendered')) return;
+
+            try {
+                // const res = await fetch(`/api/document/sentence-topic?documentId=` + documentId);
+                // if (!res.ok) throw new Error("Network response was not ok");
+                // const data = await res.json();
+
+                Highcharts.chart('visualization-container', {
+                    chart: {
+                        type: 'arcdiagram',
+                        height: '600px'
+                    },
+                    title: {
+                        text: 'Sentence-Topic Arc Diagram'
+                    },
+                    accessibility: {
+                        description: 'Arc diagram showing sentence to topic connections.',
+                        point: {
+                            valueDescriptionFormat: 'Connection from {point.from} to {point.to}.'
+                        }
+                    },
+                    series: [{
+                        keys: ['from', 'to', 'weight'],
+                        type: 'arcdiagram',
+                        name: 'Sentence-Topic connections',
+                        linkWeight: 1.5,
+                        centeredLinks: true,
+                        dataLabels: {
+                            rotation: 90,
+                            y: 30,
+                            verticalAlign: 'top',
+                            color: 'black',
+                            padding: 0
+                        },
+                        offset: '65%',
+                        data: sentenceTopicData,
+                        point: {
+                            events: {
+                                click: function (event) {
+                                    const name = this.name;
+                                    clearTopicColoring();
+                                    hideTopicNavButtons();
+                                    if (typeof this.name === 'string') {
+
+                                        colorUnifiedTopics(name);
+                                        setTimeout(function () {
+                                            scrollToFirstMatchingTopic(name);
+                                        }, 100);
+
+                                        updateTopicMarkersOnMinimap(name)
+
+                                    }
+                                    else {
+                                        $('.colorable-topic').each(function () {
+                                            const topicValue = $(this).data('topic-value');
+                                            const utId = parseInt(this.id.replace('utopic-UT-', ''));
+                                            if (utId === name) {
+                                                $(this).css({
+                                                    'background-color': topicColorMap[topicValue],
+                                                    'border-radius': '3px',
+                                                    'padding': '0 2px'
+                                                });
+                                                this.scrollIntoView({behavior: 'smooth', block: 'center'});
+                                            }
+
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }]
+                });
+
+                container.classList.add('rendered');
+            } catch (error) {
+                container.innerHTML = `<p style="color:red;">Failed to load visualization: `+error.message`+</p>`;
+                console.error("Error loading arc diagram data:", error);
+            }
+        }
+    });
+});

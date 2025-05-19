@@ -488,6 +488,7 @@ body {
     border-left: 1px solid #ddd;
     z-index: 50;
     cursor: pointer;
+    transition: right 0.5s ease;
 }
 
 /* Adjust minimap position when sidebar is collapsed */
@@ -569,4 +570,41 @@ body {
     word-break: break-word;
     max-height: 130px;
     overflow: hidden;
+}
+
+.tab-header {
+    display: flex;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 10px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px;
+    cursor: pointer;
+    border: none;
+    background: #f7f7f7;
+    border-right: 1px solid #ccc;
+    font-weight: bold;
+}
+
+.tab-btn:last-child {
+    border-right: none;
+}
+
+.tab-btn.active {
+    background: #fff;
+    border-bottom: 2px solid #007bff;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+.side-bar.visualization-expanded {
+    width: 150vw !important; /* Adjust based on your layout */
+    transition: width 0.5s ease;
 }

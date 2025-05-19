@@ -18,6 +18,11 @@
         <#include "*/css/wiki.css">
         <#include "*/css/bg-anim.css">
     </style>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/sankey.js"></script>
+    <script src="https://code.highcharts.com/modules/arc-diagram.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
             crossorigin="anonymous"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -168,81 +173,115 @@
 
             <div class="side-bar">
 
-                <div class="expander" data-expanded="true"><i class="m-0 xlarge-font fas fa-chevron-right"></i></div>
-
-                <div class="side-bar-content">
-                    <div class="header">
-                        <h5 class="text-center">Navigator</h5>
-                    </div>
-
-                    <div class="group-box">
-                        <p class="text-center mb-0"><i class="fas fa-id-card-alt mr-1"></i> ${document.getDocumentId()}</p>
-                    </div>
-
-                    <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
-                        <div class="group-box">
-                            <p class="title">${languageResource.get("ogDocument")}</p>
-                            <a href="${document.getMetadataTitleInfo().getScrapedUrl()}" target="_blank"
-                               class="title-image mb-3">
-                                <img src="${document.getMetadataTitleInfo().getTitleImageUrl()}"/>
-                            </a>
-                        </div>
-                    </#if>
-
-                    <div class="group-box">
-                        <p class="title">${languageResource.get("settings")}</p>
-                        <div class="flexed align-items-center">
-                            <i class="fas fa-text-height mr-2"></i>
-                            <input min="10" max="30" class="font-size-range w-100 hoverable" value="20" type="range"/>
-                        </div>
-                    </div>
-
-                    <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
-                        <div class="group-box">
-                            <p class="title">${languageResource.get("page")} <span class="current-page">1</span></p>
-                            <a class="btn open-metadata-url-page-btn" target="_blank"
-                               data-href="${document.getMetadataTitleInfo().getPageViewStartUrl()}"
-                               href="${document.getMetadataTitleInfo().getPageViewStartUrl()}">
-                                <i class="mr-2 fas fa-university"></i> Original
-                            </a>
-                        </div>
-                    </#if>
-
-                    <div class="buttons group-box">
-                        <p class="title">${languageResource.get("functions")}</p>
-                        <button class="btn toggle-focus-btn">
-                            <i class="fas fa-satellite-dish mr-2"></i> Toggle Focus
-                        </button>
-                        <button class="btn toggle-highlighting-btn" data-highlighted="true">
-                            <i class="fas fa-highlighter mr-2"></i> Toggle Highlighting
-                        </button>
-                        <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
-                            <a href="${document.getMetadataTitleInfo().getPdfUrl()}" class="btn">
-                                <i class="fas fa-file-pdf mr-2"></i> Download PDF
-                            </a>
-                        </#if>
-                    </div>
-
-                    <#if (searchTokens?has_content) && (searchTokens?length gt 0)>
-                        <div class="group-box search-tokens-box">
-                            <p class="title"><span>${languageResource.get("searchTokens")}</span> <i
-                                        class="ml-2 rotate fas fa-spinner"></i></p>
-                            <div class="found-searchtokens-list">
-                            </div>
-                        </div>
-                    </#if>
-
-                    <!-- Document Topics Section -->
-                    <div class="group-box topics-box">
-                        <p class="title">
-                            <span>${languageResource.get("topics")}</span>
-                            <i class="ml-2 topics-loading rotate fas fa-spinner"></i>
-                        </p>
-                        <div class="document-topics-list" data-document-id="${document.id}">
-                        </div>
-                    </div>
+                <!-- Tab Headers -->
+                <div class="tab-header">
+                    <button class="tab-btn active" data-tab="navigator-tab">Navigator</button>
+                    <button class="tab-btn" data-tab="visualization-tab">Visualization</button>
+                    <button class="tab-btn" data-tab="playground-tab">Playground</button>
+                    <!-- Add more tabs as needed -->
                 </div>
 
+                <!-- Tab Content Wrapper -->
+                <div class="tab-content">
+
+                    <!-- Navigator Tab -->
+                    <div class="tab-pane active" id="navigator-tab">
+                        <div class="expander" data-expanded="true"><i class="m-0 xlarge-font fas fa-chevron-right"></i></div>
+                        <div class="side-bar-content">
+
+
+                            <div class="group-box">
+                                <p class="text-center mb-0"><i class="fas fa-id-card-alt mr-1"></i> ${document.getDocumentId()}</p>
+                            </div>
+
+                            <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
+                                <div class="group-box">
+                                    <p class="title">${languageResource.get("ogDocument")}</p>
+                                    <a href="${document.getMetadataTitleInfo().getScrapedUrl()}" target="_blank"
+                                       class="title-image mb-3">
+                                        <img src="${document.getMetadataTitleInfo().getTitleImageUrl()}"/>
+                                    </a>
+                                </div>
+                            </#if>
+
+                            <div class="group-box">
+                                <p class="title">${languageResource.get("settings")}</p>
+                                <div class="flexed align-items-center">
+                                    <i class="fas fa-text-height mr-2"></i>
+                                    <input min="10" max="30" class="font-size-range w-100 hoverable" value="20" type="range"/>
+                                </div>
+                            </div>
+
+                            <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
+                                <div class="group-box">
+                                    <p class="title">${languageResource.get("page")} <span class="current-page">1</span></p>
+                                    <a class="btn open-metadata-url-page-btn" target="_blank"
+                                       data-href="${document.getMetadataTitleInfo().getPageViewStartUrl()}"
+                                       href="${document.getMetadataTitleInfo().getPageViewStartUrl()}">
+                                        <i class="mr-2 fas fa-university"></i> Original
+                                    </a>
+                                </div>
+                            </#if>
+
+                            <div class="buttons group-box">
+                                <p class="title">${languageResource.get("functions")}</p>
+                                <button class="btn toggle-focus-btn">
+                                    <i class="fas fa-satellite-dish mr-2"></i> Toggle Focus
+                                </button>
+                                <button class="btn toggle-highlighting-btn" data-highlighted="true">
+                                    <i class="fas fa-highlighter mr-2"></i> Toggle Highlighting
+                                </button>
+                                <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
+                                    <a href="${document.getMetadataTitleInfo().getPdfUrl()}" class="btn">
+                                        <i class="fas fa-file-pdf mr-2"></i> Download PDF
+                                    </a>
+                                </#if>
+                            </div>
+
+                            <#if (searchTokens?has_content) && (searchTokens?length gt 0)>
+                                <div class="group-box search-tokens-box">
+                                    <p class="title"><span>${languageResource.get("searchTokens")}</span> <i
+                                                class="ml-2 rotate fas fa-spinner"></i></p>
+                                    <div class="found-searchtokens-list"></div>
+                                </div>
+                            </#if>
+
+                            <div class="group-box topics-box">
+                                <p class="title">
+                                    <span>${languageResource.get("topics")}</span>
+                                    <i class="ml-2 topics-loading rotate fas fa-spinner"></i>
+                                </p>
+                                <div class="document-topics-list" data-document-id="${document.id}"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visualization Tab -->
+                    <div class="tab-pane" id="visualization-tab">
+                        <div class="side-bar-content">
+                            <div class="header">
+                                <h5 class="text-center">Visualization</h5>
+                            </div>
+                            <div id="visualization-container" data-document-id="${document.id}"></div>
+
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" id="playground-tab">
+                        <div class="side-bar-content">
+                            <div class="header">
+                                <h5 class="text-center">Playground</h5>
+                            </div>
+                            <!-- You can add any custom content here -->
+                            <div class="group-box">
+                                <p>Here you can interact with the document</p>
+                                <!-- Placeholder: Replace or inject your chart/graph here -->
+                                <div id="playground-container"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
 
