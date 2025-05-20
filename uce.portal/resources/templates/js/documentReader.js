@@ -774,6 +774,28 @@ function updateMinimapScroll() {
     });
 }
 
+function updateFloatingUIPositions() {
+    const sidebar = document.querySelector('.side-bar');
+    const minimap = document.querySelector('.scrollbar-minimap');
+    const navButtons = document.querySelector('.topic-navigation-buttons');
+
+    if (!sidebar || !minimap) return;
+
+    const sidebarRect = sidebar.getBoundingClientRect();
+
+    // Minimap: just left of the sidebar
+    const minimapRight = window.innerWidth - sidebarRect.left + 10;
+    minimap.style.right = minimapRight + `px`;
+
+    // Navigation buttons: 40px to the left of the minimap
+    if (navButtons) {
+        navButtons.style.right = minimapRight + 40 + `px`;
+    }
+}
+
+window.addEventListener('resize', updateFloatingUIPositions);
+window.addEventListener('DOMContentLoaded', updateFloatingUIPositions);
+
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
         const targetId = btn.getAttribute('data-tab');
@@ -790,124 +812,133 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
         // Adjust sidebar width on visualization tab
         if (targetId !== 'navigator-tab') {
-            $('.scrollbar-minimap').css({
-                right: ($('.document-content').width() > 900 ? ($('.document-content').width() + 100) + 'px' : '510px'),
-
-            });
-            $('.topic-navigation-buttons').css({right:($('.document-content').width() > 900 ? ($('.document-content').width() + 130) + 'px' : '520px')})
+            $('.scrollbar-minimap').hide();
+            // $('.scrollbar-minimap').css({
+            //     right: ($('.document-content').width() > 900 ? ($('.document-content').width() + 100) + 'px' : '510px'),
+            //
+            // });
+            // $('.topic-navigation-buttons').css({right:($('.document-content').width() > 900 ? ($('.document-content').width() + 130) + 'px' : '520px')})
             sideBar.classList.add('visualization-expanded');
         } else {
-            $('.scrollbar-minimap').css({
-                right: '510px',
-            });
 
-            $('.topic-navigation-buttons').css({right: '520px'});
+            setTimeout(updateFloatingUIPositions,500) ;
+            //
+            // $('.topic-navigation-buttons').css({right: '520px'});
             clearTopicColoring();
-
             hideTopicNavButtons();
             currentSelectedTopic = null;
             sideBar.classList.remove('visualization-expanded');
+            $('.scrollbar-minimap').show();
         }
-
-        // If visualization tab is selected, trigger the chart
         if (targetId === 'visualization-tab') {
-            const container = document.getElementById('visualization-container');
-            const rawId = container.getAttribute("data-document-id");
-            const documentId = parseInt(rawId.replace(/,/g, ''));
+            // Trigger the default sub-panel (e.g., Arc Diagram)
+            renderArcDiagram(); // <- You call it directly here
 
-            let sentenceTopicData = [];
-            $('.colorable-topic').each(function () {
-                const topicValue = $(this).data('topic-value');
-                const utId = parseInt(this.id.replace('utopic-UT-', ''));
+            // Optional: reset sub-nav state if needed
+            $('.viz-nav-btn').removeClass('active');
+            $('.viz-nav-btn').first().addClass('active');
 
-                // Assuming each colorable-topic represents a connection from a sentence to a topic
-                // You might need to adjust this based on your actual data structure
-                sentenceTopicData.push({
-                    from: utId,  // or some other identifier for the sentence
-                    to: topicValue,
-                    weight: 1  // or some other value representing the strength of the connection
-                });
-            });
-
-            // Avoid double-rendering if already rendered
-            if (container.classList.contains('rendered')) return;
-
-            try {
-                // const res = await fetch(`/api/document/sentence-topic?documentId=` + documentId);
-                // if (!res.ok) throw new Error("Network response was not ok");
-                // const data = await res.json();
-
-                Highcharts.chart('visualization-container', {
-                    chart: {
-                        type: 'arcdiagram',
-                        height: '600px'
-                    },
-                    title: {
-                        text: 'Sentence-Topic Arc Diagram'
-                    },
-                    accessibility: {
-                        description: 'Arc diagram showing sentence to topic connections.',
-                        point: {
-                            valueDescriptionFormat: 'Connection from {point.from} to {point.to}.'
-                        }
-                    },
-                    series: [{
-                        keys: ['from', 'to', 'weight'],
-                        type: 'arcdiagram',
-                        name: 'Sentence-Topic connections',
-                        linkWeight: 1.5,
-                        centeredLinks: true,
-                        dataLabels: {
-                            rotation: 90,
-                            y: 30,
-                            verticalAlign: 'top',
-                            color: 'black',
-                            padding: 0
-                        },
-                        offset: '65%',
-                        data: sentenceTopicData,
-                        point: {
-                            events: {
-                                click: function (event) {
-                                    const name = this.name;
-                                    clearTopicColoring();
-                                    hideTopicNavButtons();
-                                    if (typeof this.name === 'string') {
-
-                                        colorUnifiedTopics(name);
-                                        setTimeout(function () {
-                                            scrollToFirstMatchingTopic(name);
-                                        }, 100);
-
-                                        updateTopicMarkersOnMinimap(name)
-
-                                    }
-                                    else {
-                                        $('.colorable-topic').each(function () {
-                                            const topicValue = $(this).data('topic-value');
-                                            const utId = parseInt(this.id.replace('utopic-UT-', ''));
-                                            if (utId === name) {
-                                                $(this).css({
-                                                    'background-color': topicColorMap[topicValue],
-                                                    'border-radius': '3px',
-                                                    'padding': '0 2px'
-                                                });
-                                                this.scrollIntoView({behavior: 'smooth', block: 'center'});
-                                            }
-
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                    }]
-                });
-
-                container.classList.add('rendered');
-            } catch (error) {
-                container.innerHTML = `<p style="color:red;">Failed to load visualization: `+error.message`+</p>`;
-                console.error("Error loading arc diagram data:", error);
-            }
+            $('.viz-panel').removeClass('active');
+            $('.viz-panel').first().addClass('active');
         }
     });
+
 });
+
+function renderArcDiagram() {
+    const container = document.getElementById('visualization-container');
+    if (!container || container.classList.contains('rendered')) return;
+    let sentenceTopicData = [];
+    $('.colorable-topic').each(function () {
+        const topicValue = $(this).data('topic-value');
+        const utId = parseInt(this.id.replace('utopic-UT-', ''));
+
+        sentenceTopicData.push({
+            from: utId,
+            to: topicValue,
+            weight: 1
+        });
+    });
+
+    Highcharts.chart('visualization-container', {
+        chart: {
+            type: 'arcdiagram',
+            height: '600px'
+        },
+        title: {
+            text: 'Sentence-Topic Arc Diagram'
+        },
+        accessibility: {
+            description: 'Arc diagram showing sentence to topic connections.',
+            point: {
+                valueDescriptionFormat: 'Connection from {point.from} to {point.to}.'
+            }
+        },
+        series: [{
+            keys: ['from', 'to', 'weight'],
+            type: 'arcdiagram',
+            name: 'Sentence-Topic connections',
+            linkWeight: 1.5,
+            centeredLinks: true,
+            dataLabels: {
+                rotation: 90,
+                y: 30,
+                verticalAlign: 'top',
+                color: 'black',
+                padding: 0
+            },
+            offset: '65%',
+            data: sentenceTopicData,
+            point: {
+                events: {
+                    click: function () {
+                        const name = this.name;
+                        clearTopicColoring();
+                        hideTopicNavButtons();
+                        if (typeof name === 'string') {
+                            colorUnifiedTopics(name);
+                            setTimeout(() => scrollToFirstMatchingTopic(name), 100);
+                            updateTopicMarkersOnMinimap(name);
+                            updateFloatingUIPositions();
+                            $('.scrollbar-minimap').show();
+                        } else {
+                            $('.scrollbar-minimap').hide();
+                            hideTopicNavButtons();
+                            $('.colorable-topic').each(function () {
+                                const topicValue = $(this).data('topic-value');
+                                const utId = parseInt(this.id.replace('utopic-UT-', ''));
+                                if (utId === name) {
+                                    $(this).css({
+                                        'background-color': topicColorMap[topicValue],
+                                        'border-radius': '3px',
+                                        'padding': '0 2px'
+                                    });
+                                    this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+        }]
+    });
+
+    container.classList.add('rendered');
+}
+
+$(document).on('click', '.viz-nav-btn', function () {
+    const target = $(this).data('target');
+
+    // Update active button
+    $('.viz-nav-btn').removeClass('active');
+    $(this).addClass('active');
+
+    // Update visible panel
+    $('.viz-panel').removeClass('active');
+    $(target).addClass('active');
+
+    if (target === '#viz-panel-1') {
+        setTimeout(renderArcDiagram, 500);
+    }
+});
+

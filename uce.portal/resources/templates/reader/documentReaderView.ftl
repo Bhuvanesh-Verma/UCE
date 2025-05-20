@@ -258,14 +258,35 @@
 
                     <!-- Visualization Tab -->
                     <div class="tab-pane" id="visualization-tab">
-                        <div class="side-bar-content">
-                            <div class="header">
-                                <h5 class="text-center">Visualization</h5>
+                        <div class="visualization-wrapper">
+                            <!-- Dynamic content area -->
+                            <div class="visualization-content">
+                                <div class="viz-panel active" id="viz-panel-1">
+                                    <div class="side-bar-content">
+                                        <div id="visualization-container" data-document-id="${document.id}"></div>
+                                    </div>
+                                </div>
+                                <div class="viz-panel" id="viz-panel-2">
+                                    <p>Panel 2 content goes here (e.g., another plot).</p>
+                                </div>
+                                <div class="viz-panel" id="viz-panel-3">
+                                    <p>Panel 3 content goes here.</p>
+                                </div>
+                                <div class="viz-panel" id="viz-panel-4">
+                                    <p>Panel 4 content goes here.</p>
+                                </div>
                             </div>
-                            <div id="visualization-container" data-document-id="${document.id}"></div>
 
+                            <!-- Bottom nav bar -->
+                            <div class="viz-bottom-nav">
+                                <button class="viz-nav-btn active" data-target="#viz-panel-1">Arc Diagram</button>
+                                <button class="viz-nav-btn" data-target="#viz-panel-2">Plot 2</button>
+                                <button class="viz-nav-btn" data-target="#viz-panel-3">Plot 3</button>
+                                <button class="viz-nav-btn" data-target="#viz-panel-4">Plot 4</button>
+                            </div>
                         </div>
                     </div>
+
 
                     <div class="tab-pane" id="playground-tab">
                         <div class="side-bar-content">
