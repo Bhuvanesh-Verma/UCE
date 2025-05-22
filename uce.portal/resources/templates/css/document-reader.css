@@ -211,7 +211,7 @@ body {
 }
 
 .document-content .multi-annotation:hover .multi-annotation-popup {
-    display: flex;
+    display: inline-flex;
 }
 
 .document-content .multi-annotation-popup {
@@ -274,6 +274,11 @@ body {
     text-decoration-color: transparent;
 }
 
+.document-content .geoname {
+    color: dodgerblue;
+    text-decoration-color: transparent;
+}
+
 .document-content .lemma {
     z-index: 0 !important;
 }
@@ -287,10 +292,7 @@ body {
 }
 
 .document-content .taxon {
-    text-decoration-thickness: 1px;
-    opacity: 0.75;
     color: darkred;
-    text-decoration-line: underline;
 }
 
 .document-content .cue {

@@ -21,6 +21,7 @@
         <#include "*/css/layered-search-builder.css">
         <#include "*/css/kwic.css">
         <#include "*/css/drawflow.css">
+        <#include "*/css/analysis.css">
     </style>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
             crossorigin="anonymous"></script>
@@ -50,6 +51,9 @@
     <script src="js/visualization/cdns/chartjs-449.js"></script>
     <script src="js/visualization/cdns/d3js-790.js"></script>
     <script src="js/visualization/cdns/drawflow-last.js"></script>
+    <!-- for leaflet search plugin -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script type="module" src="js/md-block.js"></script>
@@ -57,7 +61,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.4.0/gsap.min.js"></script>
     <script src="https://requirejs.org/docs/release/2.3.5/minified/require.js"></script>
     <!--<script src="https://unpkg.com/@tweenjs/tween.js@^20.0.0/dist/tween.umd.js"></script>-->
-
     <title>${title}</title>
 </head>
 
@@ -188,6 +191,8 @@
                                     class="fab fa-wikipedia-w color-prime"></i> ${languageResource.get("lexicon")}</a>
                         <a class="switch-view-btn btn text" data-id="team"><i
                                     class="fas fa-users color-prime"></i> ${languageResource.get("team")}</a>
+                        <a class="switch-view-btn btn text" data-id="analysis"><i
+                                    class="fas fa-chart-pie color-prime"></i> ${languageResource.get("analysis")}</a>
                     </div>
                     <select class="form-control bg-default rounded-0 color-prime border-right-0 large-font switch-language-select">
                         <option data-lang="en-EN">Englisch</option>
@@ -352,12 +357,12 @@
                                 <div class="option w-auto" data-trigger="hover"
                                      data-toggle="popover" data-placement="top" data-html="true"
                                      data-content="${languageResource.get("enrichOption")}">
-                                    <#assign enrichDisabled = 'checked'>
+                                    <#--<#assign enrichDisabled = 'checked'>
                                     <#if !isSparqlAlive>
                                         <#assign enrichDisabled = 'disabled'>
-                                    </#if>
+                                    </#if>-->
                                     <label class="mb-0 w-100 small-font mr-3">Enrich</label>
-                                    <input type="checkbox" data-id="ENRICH" ${enrichDisabled}/>
+                                    <input type="checkbox" data-id="ENRICH"/>
                                 </div>
                             </div>
                         </div>
@@ -379,6 +384,11 @@
         <!-- Lexicon -->
         <div class="view display-none" data-id="lexicon">
             <#include "*/wiki/lexicon.ftl" />
+        </div>
+
+        <!-- analysis -->
+        <div class="view display-none" data-id="analysis">
+            <#include "*/wiki/analysis.ftl" />
         </div>
 
         <!-- team -->
@@ -512,6 +522,7 @@
     <#include "js/search.js">
     <#include "js/layeredSearch.js">
     <#include "js/keywordInContext.js">
+    <#include "js/analysis.js">
+    <#include "js/analysisAPI.js">
 </script>
-
 </html>
